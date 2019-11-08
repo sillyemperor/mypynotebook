@@ -166,5 +166,15 @@ def CN_NEWS(*args, **kwargs):
 
 
 if __name__ == '__main__':
-    train_dataset, test_dataset = CN_NEWS(root='data/chinese_news')
-    print(len(train_dataset.get_vocab()))
+    from torch.utils.data import DataLoader
+    train_dataset, test_dataset = CN_NEWS(root='data/chinese_news', ngrams=1, vocab=None)
+    # print(len(train_dataset.get_vocab()))
+    # token_list = ['here', 'we', 'are']
+    # print(list(ngrams_iterator(token_list, 3)))
+    data = DataLoader(train_dataset, batch_size=16, shuffle=True)
+    VOCAB_SIZE = len(train_dataset.get_vocab())
+    print(VOCAB_SIZE)
+    for i, (text, offsets, cls) in enumerate(data):
+        print(i, text, offsets, cls)
+
+

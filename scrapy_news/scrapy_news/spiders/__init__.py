@@ -74,3 +74,60 @@ class FortuneChinaNewsSpider(scrapy.Spider):
         s = ''.join([text.get() for text in response.xpath('//div[@class="left_zw"]//p/text()')])
         with open(os.path.join(data_dir, 'fortune', f'{title}.txt'), 'w', encoding='utf-8') as fp:
             fp.write(s)
+
+
+class EntNetEaseSpider(scrapy.Spider):
+    name = '163_ent'
+    allowed_domains = ['163.com']
+    start_urls = [
+        'http://news.163.com/special/0001386F/rank_ent.html',
+    ]
+
+    def parse(self, response):
+
+        for href in response.xpath('//div[@class="tabContents"]//td/a') :
+            yield response.follow(href, callback=self.parse_content)
+
+    def parse_content(self, response):
+        title = response.css('title::text').get().replace('/', '_')
+        s = ''.join([text.get() for text in response.xpath('//div[@class="post_content_main"]//p/text()')])
+        with open(os.path.join(data_dir, 'ent', f'{title}.txt'), 'w', encoding='utf-8') as fp:
+            fp.write(s)
+
+
+class SportNetEaseSpider(scrapy.Spider):
+    name = '163_sport'
+    allowed_domains = ['163.com']
+    start_urls = [
+        'http://news.163.com/special/0001386F/rank_sports.html',
+    ]
+
+    def parse(self, response):
+
+        for href in response.xpath('//div[@class="tabContents"]//td/a') :
+            yield response.follow(href, callback=self.parse_content)
+
+    def parse_content(self, response):
+        title = response.css('title::text').get().replace('/', '_')
+        s = ''.join([text.get() for text in response.xpath('//div[@class="post_content_main"]//p/text()')])
+        with open(os.path.join(data_dir, 'sport', f'{title}.txt'), 'w', encoding='utf-8') as fp:
+            fp.write(s)
+
+
+class FortuneNetEaseSpider(scrapy.Spider):
+    name = '163_fortune'
+    allowed_domains = ['163.com']
+    start_urls = [
+        'http://money.163.com/special/002526BH/rank.html',
+    ]
+
+    def parse(self, response):
+
+        for href in response.xpath('//div[@class="tabContents"]//td/a') :
+            yield response.follow(href, callback=self.parse_content)
+
+    def parse_content(self, response):
+        title = response.css('title::text').get().replace('/', '_')
+        s = ''.join([text.get() for text in response.xpath('//div[@class="post_content_main"]//p/text()')])
+        with open(os.path.join(data_dir, 'fortune', f'{title}.txt'), 'w', encoding='utf-8') as fp:
+            fp.write(s)
