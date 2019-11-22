@@ -8,22 +8,24 @@ from model import LSTM, predict, load_model
 
 if __name__ == '__main__':
 
-    data = [[3.35],[3.31],[3.31],[3.35],[3.34],[3.36],[3.35],[3.42]]
-    data.reverse()
-    print('601600', predict(load_model('601600'), data))
+    stock = '300127'
 
-    raw = [[5.54],[5.52],[5.5],[5.6]]
-    raw.reverse()
-    print('601857', predict(load_model('601857', 1, 4), raw))
-
-    data = [[13.67],[13.15],[12.56],[13.38],[13.55],[14.17],[14.2],[12.91]]
+    data = [[18.08], [19.03],[17.3],[17.08],[17.05],[16.73],[16.69],[16.58]]
     data.reverse()
-    print('300472', predict(load_model('300472'), data))
+    print(stock, 'close', predict(load_model(stock, 3), data))
 
-    data = [[10.07],[10.02],[10.38],[9.83],[8.94],[8.86],[9.3],[9.85]]
+    data = [[19.13],[19.03],[17.45],[17.24],[17.77],[16.84],[16.95],[17.32]]
     data.reverse()
-    print('002332', predict(load_model('002332'), data))
+    print(stock, 'max', predict(load_model(stock, 4), data))
 
-    data = [[17.3],[17.08],[17.05],[16.73],[16.69],[16.58],[17.23],[17.25]]
+    data = [[18.06],[17.11],[17.01],[16.56],[16.5],[16.39],[16.36],[16.53]]
     data.reverse()
-    print('300127', predict(load_model('300127'), data))
+    print(stock, 'min', predict(load_model(stock, 5), data))
+
+    data = [[18.6],[17.25],[17.04],[16.77],[16.52],[16.48],[16.87],[16.92]]
+    data.reverse()
+    print(stock, 'open', predict(load_model(stock, 6), data))
+
+    data = [[20599565],[24971351],[7078286],[7078251],[11384101],[4807995],[5009700],[7728003]]
+    data.reverse()
+    print(stock, 'volume', predict(load_model(stock, 11), data))

@@ -37,12 +37,12 @@ class LSTM(nn.Module):
         return out
 
 
-def load_model(stock, num_classes=2, seq_length=8):
+def load_model(stock, col, num_classes=2, seq_length=8):
     input_size = 1
     hidden_size = 2
     num_layers = 1
     lstm = LSTM(num_classes, input_size, hidden_size, num_layers, seq_length)
-    lstm.load_state_dict(torch.load(f'../data/ashare/models/{stock}-{seq_length}-{num_classes}.pt'))
+    lstm.load_state_dict(torch.load(f'../data/ashare/models/{stock}-col{col}-{seq_length}-{num_classes}.pt'))
     return lstm
 
 

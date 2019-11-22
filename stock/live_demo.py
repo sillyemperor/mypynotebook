@@ -6,6 +6,7 @@ import torch
 import numpy as np
 import pandas as pd
 from datetime import datetime
+import matplotlib.pyplot as plt
 
 
 def local_price(file):
@@ -20,9 +21,12 @@ def local_price(file):
 def live_price(stock):
     t1 = time.time()
     while True:
-        df = ts.get_realtime_quotes(stock)
-        price = df['price'][0]
-        yield price
+        try:
+            df = ts.get_realtime_quotes(stock)
+            price = df['price'][0]
+            yield price
+        except:
+            continue
         d = 3 - (time.time() - t1)
         t1 = time.time()
         if d > 0:
@@ -55,6 +59,7 @@ aloss_list = []
 loss_list = []
 x_list = []
 y_list = []
+plt.ion()
 for price in loader:
 
     bucket.append([float(price)])
@@ -69,15 +74,35 @@ for price in loader:
                 loss = y - x
                 aloss = loss.sum() / num_classes
 
-                loss_list += list(loss.view(-1).numpy())
-                x_list += list(x.view(-1).numpy())
-                y_list += list(y.view(-1).numpy())
+                loss = list(loss.view(-1).numpy())
+                x = list(x.view(-1).numpy())
+                y = list(y.view(-1).numpy())
+
+                loss_list += loss
+                x_list += x
+                y_list += y
                 aloss_list.append(aloss)
 
+                plt.subplot(2, 2, 1)
+                plt.plot(loss)
+                plt.subplot(2, 2, 2)
+                plt.plot(loss_list)
+                plt.subplot(2, 2, 3)
+                plt.plot(y, c='g')
+                plt.plot(x, c='r')
+                plt.subplot(2, 2, 4)
+                plt.plot(y_list, c='g')
+                plt.plot(x_list, c='r')
+                plt.draw()
+                plt.pause(0.0001)
+                plt.clf()
+
                 # print(x)
-            #                 print(y)
-            #                 print(aloss, elapsed)
-            #                 print()
+            #   print(y)
+                print(aloss, elapsed)
+                print()
+
+
 
             t1 = time.time()
             training_data = torch.Tensor(data)
@@ -95,4 +120,4 @@ for price in loader:
             predict_y = predict(lstm, predict_data)
             print(predict_y)
 
-        bucket = []
+        bucket = bucket[num_classes:]

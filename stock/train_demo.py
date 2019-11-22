@@ -9,17 +9,12 @@ from datetime import datetime
 from model import LSTM, sliding_windows, train
 
 
-
-if __name__ == '__main__':
-    stock = '300127'
-
-    data = pd.read_csv(f'../data/ashare/{stock}.csv', encoding='GBK', converters={
-        0:lambda x:datetime.strptime(x, '%Y-%m-%d')
+def train_model(stock, col):
+    data = pd.read_csv(f'../data/ashare/{stock}.csv', converters={
+        0: lambda x: datetime.strptime(x, '%Y/%m/%d')
     })
-
     data = data.sort_index(ascending=False)
-
-    training_set = data.iloc[:,3].values
+    training_set = data.iloc[:, col].values
 
     sc = MinMaxScaler()
     training_data = sc.fit_transform(training_set.reshape(-1, 1))
@@ -54,5 +49,22 @@ if __name__ == '__main__':
 
     train(lstm, num_epochs, num_classes, trainX, trainY, learning_rate)
 
-    torch.save(lstm.state_dict(), f'../data/ashare/models/{stock}-8-2.pt')
+    torch.save(lstm.state_dict(), f'../data/ashare/models/{stock}-col{col}-8-2.pt')
+
+if __name__ == '__main__':
+    train_model('300127', 3)  # 收盘价
+    train_model('300127', 4)  # 最高价
+    train_model('300127', 5)  # 最低价
+    train_model('300127', 6)  # 开盘价
+    train_model('300127', 11)  # 成交量
+
+
+
+
+
+
+
+
+
+
 
