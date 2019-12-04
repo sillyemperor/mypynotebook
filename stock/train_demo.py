@@ -10,8 +10,8 @@ from model import LSTM, sliding_windows, train
 
 
 def train_model(stock, col):
-    data = pd.read_csv(f'../data/ashare/{stock}.csv', converters={
-        0: lambda x: datetime.strptime(x, '%Y/%m/%d')
+    data = pd.read_csv(f'../data/ashare/{stock}.csv', encoding='gbk', converters={
+        0: lambda x: datetime.strptime(x, '%Y-%m-%d')
     })
     data = data.sort_index(ascending=False)
     training_set = data.iloc[:, col].values
