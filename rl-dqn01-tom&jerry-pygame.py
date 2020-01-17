@@ -18,7 +18,9 @@ import torch.nn.functional as F
 import torchvision.transforms as T
 from collections import namedtuple
 import random
+from env_tom_jerry import OneCheese, ThreeCheese
 
+EVN = ThreeCheese
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 N = 5
@@ -28,61 +30,12 @@ M = 64
 def mk_state_map(xy):
     map = [0]*(N*N)
     map[xy[0]*N+xy[1]] = .9
-    # print(map)
     return torch.Tensor(map)
 
 
-class Environment:
-    def __init__(self):
-        self.cheese = [int(N*.6), int(N*.8)]
-        self.tom = [int(N*.5), int(N*.8)]
-        pygame.init()
-        self.cheese_img = pygame.image.load(os.path.join(BASE_DIR, "data/cheese64.png"))
-        self.tom_img = pygame.image.load(os.path.join(BASE_DIR, 'data/cat64.png'))
-        self.jerry_img = pygame.image.load(os.path.join(BASE_DIR, 'data/mouse64.png'))
-        self.screen = pygame.display.set_mode((N * M, N * M))
-
-    def step(self, s, a):
-        """
-        :param s:(x,y)
-        :param a:str
-        :return:
-        """
-        if a == 0:
-            d = np.array([-1, 0])
-        elif a == 1:
-            d = np.array([1, 0])
-        elif a == 2:
-            d = np.array([0, 1])
-        elif a == 3:
-            d = np.array([0, -1])
-        s_ = s + d
-        r = -.1
-        done = False
-        if s_.min() < 0 or s_.max() > (N - 1):  # 越界留在原地
-            s_ = s
-            r = -.2
-        elif (s_ == self.cheese).all():
-            done = True
-            r = .9
-        elif (s_ == self.tom).all():
-            done = True
-            r = -0.9
-        return done, s_, r
-
-    def render(self, s):
-        pygame.event.get()
-        self.screen.fill((255, 255, 255))
-        self.screen.blit(self.cheese_img, (self.cheese[0]*M, self.cheese[1]*M))
-        self.screen.blit(self.tom_img, (self.tom[0]*M, self.tom[1]*M))
-        self.screen.blit(self.jerry_img, (s[0]*M, s[1]*M))
-        pygame.display.flip()
-        time.sleep(.1)
-
-
-EPSILON = 0.95
+EPSILON = 0.8
 status = N*N
-actions = 'up,down,left,right'.split(',')
+actions = EVN.actions
 
 policy_net = nn.Sequential(nn.Linear(status, len(actions)))
 target_net = nn.Sequential(nn.Linear(status, len(actions)))
@@ -169,11 +122,34 @@ def optimize_model():
         optimize_step += 1
 
 
-env = Environment()
+class RollList:
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = [0]*capacity
+        self.position = 0
+
+    def push(self, c):
+        """Saves a transition."""
+        self.memory[self.position] = c
+        self.position = (self.position + 1) % self.capacity
+
+    def __len__(self):
+        return len(self.memory)
+
+    def __iter__(self):
+        return self.memory.__iter__()
+
+
+env = EVN(N, BASE_DIR)
+
+meter = RollList(5)
 for e in range(MAX_EPISODES):
     s = START
     done = False
     counter = []
+    env.reset()
+
     while not done:
         env.render(s)
 
@@ -188,7 +164,8 @@ for e in range(MAX_EPISODES):
         s = s_
 
         optimize_model()
-
-    print(e, len(counter), counter[-1])
+    meter.push(len(counter))
+    avsteps = sum(meter.memory)/len(meter)
+    print(e, len(counter), counter[-1], avsteps)
 
     target_net.load_state_dict(policy_net.state_dict())

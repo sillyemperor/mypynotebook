@@ -9,62 +9,15 @@ import pandas as pd
 import pygame
 import time
 import os.path
+from env_tom_jerry import OneCheese, ThreeCheese
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
-class Environment:
-    def __init__(self, N):
-        self.cheese_img = pygame.image.load(os.path.join(BASE_DIR, "data/cheese64.png"))
-        self.tom_img = pygame.image.load(os.path.join(BASE_DIR, 'data/cat64.png'))
-        self.jerry_img = pygame.image.load(os.path.join(BASE_DIR, 'data/mouse64.png'))
-        self.cheese = [int(N*.6), int(N*.3)]
-        self.tom = [int(N*.5), int(N*.3)]
-        pygame.init()
-        self.screen = pygame.display.set_mode((N * 64, N * 64))
-
-    def step(self, s, a):
-        """
-        :param s:(x,y)
-        :param a:str
-        :return:
-        """
-        if a == 'up':
-            d = np.array([-1, 0])
-        elif a == 'down':
-            d = np.array([1, 0])
-        elif a == 'left':
-            d = np.array([0, 1])
-        elif a == 'right':
-            d = np.array([0, -1])
-        s_ = s + d
-        r = -.1
-        done = False
-        if s_.min() < 0 or s_.max() > (N - 1):  # 越界留在原地
-            s_ = s
-            r = -.2
-        elif (s_ == self.cheese).all():
-            done = True
-            r = 1.0
-        elif (s_ == self.tom).all():
-            done = True
-            r = -1.0
-        return done, s_, r
-
-    def render(self, s):
-        pygame.event.get()
-        self.screen.fill((255, 255, 255))
-        self.screen.blit(self.cheese_img, (self.cheese[0]*64, self.cheese[1]*64))
-        self.screen.blit(self.tom_img, (self.tom[0] * 64, self.tom[1] * 64))
-        self.screen.blit(self.jerry_img, (s[0] * 64, s[1] * 64))
-        pygame.display.flip()
-        time.sleep(.1)
 
 
 N = 5
 EPSILON = 0.9
 status = N*N
-actions = 'up,down,left,right'.split(',')
+actions = OneCheese.actions
 
 q_table = pd.DataFrame(np.zeros((status, len(actions))), columns=actions)
 
@@ -83,7 +36,7 @@ def get_action(s):
     return action_name
 
 
-env = Environment(N)
+env = ThreeCheese(N, BASE_DIR)
 
 START = (0, 0)
 MAX_EPISODES = 100
@@ -93,6 +46,7 @@ for e in range(MAX_EPISODES):
     s = START
     done = False
     counter = []
+    env.reset()
     while not done:
 
         l = s[0] * N + s[1]
