@@ -37,8 +37,16 @@ EPSILON = 0.8
 status = N*N
 actions = EVN.actions
 
-policy_net = nn.Sequential(nn.Linear(status, len(actions)))
-target_net = nn.Sequential(nn.Linear(status, len(actions)))
+# policy_net = nn.Sequential(nn.Linear(status, len(actions)))
+# target_net = nn.Sequential(nn.Linear(status, len(actions)))
+# 59 7 [3 3],2,[3 4],0.9 8.2
+# 60 6 [2 3],2,[2 4],-0.9 8.0
+# 61 8 [3 3],2,[3 4],0.9 8.2
+# 62 7 [3 3],2,[3 4],0.9 7.4
+# 63 8 [3 3],2,[3 4],0.9 7.2
+# 64 7 [3 3],2,[3 4],0.9 7.2
+policy_net = nn.Sequential(nn.Linear(status, status//2), nn.Linear(status//2, len(actions)))
+target_net = nn.Sequential(nn.Linear(status, status//2), nn.Linear(status//2, len(actions)))
 target_net.load_state_dict(policy_net.state_dict())
 target_net.eval()
 optimizer = optim.RMSprop(policy_net.parameters())
@@ -48,12 +56,12 @@ optimizer = optim.RMSprop(policy_net.parameters())
 optimize_step = 0
 
 
-def get_action(s):
+def get_action(s, train=True):
     """
     :param s:(x,y)
     :return:
     """
-    if (np.random.uniform() > EPSILON) or optimize_step < 100: # 一定比例或者还没有修改以前，返回随机动作
+    if train and ((np.random.uniform() > EPSILON) or optimize_step < 100): # 一定比例或者还没有修改以前，返回随机动作
         return np.random.randint(0, 4)
     else:
         with torch.no_grad():
@@ -97,7 +105,8 @@ ALPHA = .1
 def optimize_model():
     global optimize_step
     if len(memory) < BATCH_SIZE:
-        return
+        return 1
+    total_loss = 0
     for i in range(BATCH_SIZE):
         trans = random.choice(memory.memory)
 
@@ -113,6 +122,8 @@ def optimize_model():
         # Compute Huber loss
         loss = F.smooth_l1_loss(prediction, targer)
 
+        total_loss += loss.max(0)[0].detach()
+
         # Optimize the model
         optimizer.zero_grad()
         loss.backward()
@@ -120,6 +131,8 @@ def optimize_model():
             param.grad.data.clamp_(-1, 1)
         optimizer.step()
         optimize_step += 1
+
+    return total_loss
 
 
 class RollList:
@@ -149,7 +162,7 @@ for e in range(MAX_EPISODES):
     done = False
     counter = []
     env.reset()
-
+    loss = 0
     while not done:
         env.render(s)
 
@@ -163,9 +176,25 @@ for e in range(MAX_EPISODES):
         counter.append(f'{s},{a},{s_},{r}')
         s = s_
 
-        optimize_model()
-    meter.push(len(counter))
+        loss += optimize_model()
+    c = len(counter)
+    meter.push(c)
     avsteps = sum(meter.memory)/len(meter)
-    print(e, len(counter), counter[-1], avsteps)
+    print(e, c, counter[-1], loss/c, avsteps)
 
     target_net.load_state_dict(policy_net.state_dict())
+
+policy_net.train()
+
+counter = []
+s = START
+env.reset()
+done = False
+while not done:
+    env.render(s)
+    a = get_action(s, False)
+    done, s_, r = env.step(s, a)
+    counter.append(f'{s},{a},{s_},{r}')
+
+c = len(counter)
+print('test', c)
